@@ -1,0 +1,16 @@
+{
+  "spreadsheet_id": "1hILLvJaDzHJRidrZtXkReGEHdMgqN9lz_6dqezInuvU",
+  "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1hILLvJaDzHJRidrZtXkReGEHdMgqN9lz_6dqezInuvU/edit",
+  "upload_folder_id": "1S086S6wpMfTOoyrdfazDWMprK5rqQYrR",
+  "upload_folder_url": "https://drive.google.com/drive/folders/1S086S6wpMfTOoyrdfazDWMprK5rqQYrR",
+  "processed_file_ids": [],
+  "columns": [
+    "no", "recorded_at", "deal_date", "type", "counterparty",
+    "vehicle", "chassis_no", "total_amount",
+    "recycle_fee", "auto_tax_proration", "jibaiseki_fee",
+    "other_nontaxable_amount", "other_nontaxable_note",
+    "taxable_amount", "consumption_tax_estimate",
+    "source_file", "note"
+  ],
+  "records": []
+}
