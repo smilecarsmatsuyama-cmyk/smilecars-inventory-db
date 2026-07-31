@@ -163,6 +163,7 @@ tbody tr:last-child td { border-bottom: none; }
 .deal-cell .dc-taxable { font-size: 0.86rem; }
 .deal-cell .dc-taxable strong { font-variant-numeric: tabular-nums; }
 .deal-cell .dc-source { color: var(--ink-soft); font-size: 0.74rem; }
+.deal-cell .dc-evidence { color: var(--tax); font-size: 0.74rem; font-style: italic; }
 .dim { color: var(--ink-soft); }
 
 .empty-state {
@@ -329,6 +330,7 @@ function renderDealCell(r) {
       <div class="dc-total">総額 ${fmtYen(r.total_amount || 0)}</div>
       <div class="dc-nontax">${nontaxLine}</div>
       <div class="dc-taxable">課税対象額 <strong>${fmtYen(r.taxable_amount || 0)}</strong></div>
+      ${r.type_evidence ? `<div class="dc-evidence">仕入/販売の判断根拠: ${r.type_evidence}</div>` : ""}
       ${r.source_file ? `<div class="dc-source">資料: ${r.source_file}</div>` : ""}
     </div>
   `;

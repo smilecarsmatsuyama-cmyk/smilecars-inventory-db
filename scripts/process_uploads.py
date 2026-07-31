@@ -29,14 +29,22 @@ JST = timezone(timedelta(hours=9))
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5")
 
-EXTRACTION_PROMPT = """あなたは中古車販売店の経理担当です。
+EXTRACTION_PROMPT = """あなたは中古車販売店「スマイルカーズ松山店(株式会社ASHITA)」の経理担当です。
 添付の画像は自動車の売買契約書または精算書です。
 次のJSON形式で情報を抽出してください。読み取れない項目はnullにしてください。
 金額は数値(円、カンマなし)のみで出力してください。
 
+typeの判定は「スマイルカーズから見て」で判断してください。
+- スマイルカーズが車を取得する(お金を支払って車を受け取る)取引 → "buy"
+- スマイルカーズが車を手放す(車を渡してお金を受け取る)取引 → "sell"
+書類のタイトル(買取証明書/査定書/下取り は buy、販売証明書/注文書/車両代金請求書 は sell の
+ことが多い)、支払人・受取人の記載、スマイルカーズの当事者としての立場(買主か売主か)を
+手がかりにしてください。
+
 {
   "deal_date": "YYYY-MM-DD形式の取引日",
   "type": "buy(仕入れ・買取)かsell(販売)のどちらか",
+  "type_evidence": "buy/sellと判断した根拠を書類の記載から一言で(例: 書類タイトルが『買取証明書』/スマイルカーズが受取人になっている、など)",
   "counterparty": "相手方の名前",
   "vehicle": "車名・型式",
   "chassis_no": "車台番号(あれば、なければ空文字)",
@@ -168,6 +176,7 @@ def main() -> None:
             "recorded_at": datetime.now(JST).strftime("%Y-%m-%d %H:%M"),
             "deal_date": fields.get("deal_date"),
             "type": fields.get("type"),
+            "type_evidence": fields.get("type_evidence") or "",
             "counterparty": fields.get("counterparty"),
             "vehicle": fields.get("vehicle"),
             "chassis_no": fields.get("chassis_no"),
