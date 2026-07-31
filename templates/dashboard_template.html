@@ -1,6 +1,6 @@
 <!doctype html>
 <title>非課税項目管理ダッシュボード | スマイルカーズ松山店</title>
-<meta name="description" content="契約書・精算書から抽出した非課税項目(リサイクル料・自動車税・自賠責保険料)と課税対象額を管理する社内ダッシュボード">
+<meta name="description" content="車台番号で仕入・販売を紐付け、車両ごとの在庫状況・粗利・非課税項目/課税対象額を管理する社内ダッシュボード">
 
 <style>
 :root {
@@ -58,7 +58,7 @@ body {
   line-height: 1.6;
   padding: 0 0 4rem;
 }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 1.5rem; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
 
 header.top {
   border-bottom: 1px solid var(--line);
@@ -76,7 +76,7 @@ header.top .meta { color: var(--ink-soft); font-size: 0.88rem; }
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.9rem;
   margin-bottom: 2rem;
 }
@@ -87,7 +87,7 @@ header.top .meta { color: var(--ink-soft); font-size: 0.88rem; }
   padding: 1.1rem 1.2rem;
 }
 .kpi .label { font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.4rem; }
-.kpi .value { font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.kpi .value { font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .kpi .sub { font-size: 0.78rem; color: var(--ink-soft); margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
 .kpi .unit { font-size: 0.85rem; font-weight: 500; color: var(--ink-soft); margin-left: 0.15rem; }
 .kpi.accent .value { color: var(--accent-deep); }
@@ -96,7 +96,7 @@ header.top .meta { color: var(--ink-soft); font-size: 0.88rem; }
 .kpi.warn .value { color: var(--warn); }
 
 .section-heading {
-  display: flex; align-items: baseline; justify-content: space-between;
+  display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.3rem;
   margin: 0 0 0.8rem;
 }
 .section-heading h2 { font-size: 1rem; font-weight: 800; margin: 0; }
@@ -134,7 +134,7 @@ header.top .meta { color: var(--ink-soft); font-size: 0.88rem; }
   border-radius: 12px;
   background: var(--surface);
 }
-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min-width: 880px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 980px; }
 thead th {
   text-align: left; padding: 0.75rem 0.9rem; color: var(--ink-soft);
   font-weight: 700; font-size: 0.76rem; letter-spacing: 0.02em;
@@ -150,12 +150,20 @@ tbody tr:last-child td { border-bottom: none; }
 .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .badge {
   display: inline-block; font-size: 0.74rem; font-weight: 700;
-  padding: 0.2rem 0.55rem; border-radius: 999px;
+  padding: 0.2rem 0.55rem; border-radius: 999px; white-space: nowrap;
 }
 .badge.buy { background: var(--nontax-tint); color: var(--nontax); }
 .badge.sell { background: var(--accent-tint); color: var(--accent-deep); }
-.breakdown { font-size: 0.78rem; color: var(--ink-soft); }
-.breakdown .item { white-space: nowrap; }
+.badge.warn { background: var(--warn-tint); color: var(--warn); }
+
+.deal-cell { min-width: 210px; display: flex; flex-direction: column; gap: 0.15rem; }
+.deal-cell .dc-date { font-weight: 700; }
+.deal-cell .dc-total { color: var(--ink-soft); font-size: 0.82rem; }
+.deal-cell .dc-nontax { color: var(--ink-soft); font-size: 0.78rem; }
+.deal-cell .dc-taxable { font-size: 0.86rem; }
+.deal-cell .dc-taxable strong { font-variant-numeric: tabular-nums; }
+.deal-cell .dc-source { color: var(--ink-soft); font-size: 0.74rem; }
+.dim { color: var(--ink-soft); }
 
 .empty-state {
   text-align: center;
@@ -176,52 +184,48 @@ footer.foot a { color: var(--accent-deep); }
   <header class="top">
     <span class="eyebrow">非課税項目管理</span>
     <h1>非課税項目管理ダッシュボード</h1>
-    <div class="meta">スマイルカーズ松山店 / 契約書・精算書から抽出した取引データ・最終更新: <span id="generatedAt"></span></div>
+    <div class="meta">スマイルカーズ松山店 / 車台番号で仕入・販売を紐付けて集計・最終更新: <span id="generatedAt"></span></div>
   </header>
 
   <div class="section-heading">
     <h2>経営サマリー</h2>
-    <span class="note">全期間・課税対象額(車両本体分)ベース</span>
+    <span class="note">課税対象額(車両本体分)ベース・車台番号で仕入と販売を紐付けて算出</span>
   </div>
   <div class="kpi-grid" id="bizKpiGrid"></div>
 
   <hr class="section-divider">
 
   <div class="section-heading">
-    <h2>非課税項目の内訳</h2>
-    <span class="note">下の検索・絞り込みに連動します</span>
+    <h2>車両別ステータス</h2>
+    <span class="note">仕入・売上それぞれの非課税内訳と課税対象額を表示</span>
   </div>
-  <div class="kpi-grid" id="kpiGrid"></div>
 
   <div class="controls">
-    <input type="search" id="searchInput" placeholder="相手方・車名で検索">
-    <div class="seg" id="typeFilter">
-      <button data-type="all" aria-pressed="true">すべて</button>
-      <button data-type="buy" aria-pressed="false">仕入</button>
-      <button data-type="sell" aria-pressed="false">販売</button>
+    <input type="search" id="searchInput" placeholder="車台番号・車名・相手方で検索">
+    <div class="seg" id="statusFilter">
+      <button data-status="all" aria-pressed="true">すべて</button>
+      <button data-status="in_stock" aria-pressed="false">在庫</button>
+      <button data-status="sold" aria-pressed="false">販売済み</button>
     </div>
   </div>
 
   <div class="table-scroll">
-    <table id="recordsTable">
+    <table id="vehiclesTable">
       <thead>
         <tr>
-          <th data-key="deal_date">取引日<span class="arrow">▾</span></th>
-          <th data-key="type">区分<span class="arrow">▾</span></th>
-          <th data-key="counterparty">相手方<span class="arrow">▾</span></th>
+          <th data-key="chassis_no">車台番号<span class="arrow">▾</span></th>
           <th data-key="vehicle">車名・型式<span class="arrow">▾</span></th>
-          <th data-key="total_amount">総額<span class="arrow">▾</span></th>
-          <th>非課税内訳</th>
-          <th data-key="taxable_amount">課税対象額<span class="arrow">▾</span></th>
-          <th data-key="consumption_tax_estimate">消費税概算<span class="arrow">▾</span></th>
-          <th>元資料</th>
+          <th data-key="status">ステータス<span class="arrow">▾</span></th>
+          <th data-key="buy_date">仕入(非課税・課税対象額)<span class="arrow">▾</span></th>
+          <th data-key="sell_date">売上(非課税・課税対象額)<span class="arrow">▾</span></th>
+          <th data-key="profit">粗利<span class="arrow">▾</span></th>
         </tr>
       </thead>
-      <tbody id="recordsBody"></tbody>
+      <tbody id="vehiclesBody"></tbody>
     </table>
     <div class="empty-state" id="emptyState" hidden>
       <div class="big">まだ記録がありません</div>
-      <p>契約書・精算書の写真をチャットに送っていただければ、総額・リサイクル料・自動車税・自賠責保険料・課税対象額を読み取ってここに記録します。</p>
+      <p>契約書・精算書の写真をチャットに送っていただければ、車台番号・総額・リサイクル料・自動車税・自賠責保険料・課税対象額を読み取り、仕入と販売を自動で紐付けてここに表示します。</p>
     </div>
   </div>
 
@@ -238,71 +242,121 @@ document.getElementById("generatedAt").textContent = GENERATED_AT;
 
 const fmtYen = (n) => "¥" + Math.round(n).toLocaleString("ja-JP");
 
-function computeKPIs(records) {
-  const count = records.length;
-  const sum = (key) => records.reduce((a, r) => a + (Number(r[key]) || 0), 0);
-  const total = sum("total_amount");
-  const nontax = sum("recycle_fee") + sum("auto_tax_proration") + sum("jibaiseki_fee") + sum("other_nontaxable_amount");
-  const taxable = sum("taxable_amount");
-  const taxEst = sum("consumption_tax_estimate");
-  return { count, total, nontax, taxable, taxEst };
+const STATUS_LABEL = { in_stock: "在庫", sold: "販売済み", sold_no_purchase: "仕入記録なし" };
+const STATUS_BADGE_CLASS = { in_stock: "buy", sold: "sell", sold_no_purchase: "warn" };
+
+function nontaxTotal(r) {
+  return (Number(r.recycle_fee) || 0) + (Number(r.auto_tax_proration) || 0)
+    + (Number(r.jibaiseki_fee) || 0) + (Number(r.other_nontaxable_amount) || 0);
 }
 
-function renderKPIs(records) {
-  const k = computeKPIs(records);
-  const grid = document.getElementById("kpiGrid");
-  grid.innerHTML = `
-    <div class="kpi"><div class="label">取引件数</div><div class="value">${k.count.toLocaleString("ja-JP")}<span class="unit">件</span></div></div>
-    <div class="kpi"><div class="label">総額 合計</div><div class="value">${fmtYen(k.total)}</div></div>
-    <div class="kpi nontax"><div class="label">非課税項目 合計</div><div class="value">${fmtYen(k.nontax)}</div></div>
-    <div class="kpi accent"><div class="label">課税対象額 合計</div><div class="value">${fmtYen(k.taxable)}</div></div>
-    <div class="kpi tax"><div class="label">消費税概算 合計</div><div class="value">${fmtYen(k.taxEst)}</div></div>
-  `;
+function buildVehicles(records) {
+  const withChassis = records.filter((r) => r.chassis_no && String(r.chassis_no).trim());
+  const withoutChassis = records.filter((r) => !r.chassis_no || !String(r.chassis_no).trim());
+
+  const groups = {};
+  withChassis.forEach((r) => {
+    const key = String(r.chassis_no).trim();
+    (groups[key] = groups[key] || []).push(r);
+  });
+
+  const vehicles = [];
+
+  const makeEntry = (chassisLabel, buy, sell) => {
+    const status = buy && sell ? "sold" : buy ? "in_stock" : "sold_no_purchase";
+    const profit = (buy && sell)
+      ? (Number(sell.taxable_amount) || 0) - (Number(buy.taxable_amount) || 0)
+      : null;
+    return {
+      chassis_no: chassisLabel,
+      vehicle: (buy && buy.vehicle) || (sell && sell.vehicle) || "-",
+      status, buy, sell, profit,
+    };
+  };
+
+  Object.entries(groups).forEach(([chassis, recs]) => {
+    const byDate = (a, b) => String(a.deal_date || "").localeCompare(String(b.deal_date || ""));
+    const buy = recs.filter((r) => r.type === "buy").sort(byDate)[0] || null;
+    const sell = recs.filter((r) => r.type === "sell").sort(byDate)[0] || null;
+    vehicles.push(makeEntry(chassis, buy, sell));
+  });
+
+  withoutChassis.forEach((r) => {
+    if (r.type === "buy") vehicles.push(makeEntry("(未読み取り)", r, null));
+    else vehicles.push(makeEntry("(未読み取り)", null, r));
+  });
+
+  return vehicles;
 }
 
-function computeBizKPIs(records) {
-  const buys = records.filter((r) => r.type === "buy");
-  const sells = records.filter((r) => r.type === "sell");
-  const sum = (list, key) => list.reduce((a, r) => a + (Number(r[key]) || 0), 0);
-  const buyTotal = sum(buys, "taxable_amount");
-  const sellTotal = sum(sells, "taxable_amount");
-  const profit = sellTotal - buyTotal;
+function computeBizKPIs(vehicles) {
+  const sold = vehicles.filter((v) => v.status === "sold");
+  const inStock = vehicles.filter((v) => v.status === "in_stock");
+  const buyTotal = vehicles.reduce((a, v) => a + (v.buy ? Number(v.buy.taxable_amount) || 0 : 0), 0);
+  const sellTotal = sold.reduce((a, v) => a + (Number(v.sell.taxable_amount) || 0), 0);
+  const profit = sold.reduce((a, v) => a + (v.profit || 0), 0);
   const marginPct = sellTotal > 0 ? (profit / sellTotal) * 100 : null;
-  return { buyCount: buys.length, sellCount: sells.length, buyTotal, sellTotal, profit, marginPct };
+  const stockValue = inStock.reduce((a, v) => a + (Number(v.buy.taxable_amount) || 0), 0);
+  return { stockCount: inStock.length, stockValue, soldCount: sold.length, buyTotal, sellTotal, profit, marginPct };
 }
 
-function renderBizKPIs(records) {
-  const b = computeBizKPIs(records);
+function renderBizKPIs(vehicles) {
+  const b = computeBizKPIs(vehicles);
   const grid = document.getElementById("bizKpiGrid");
   const profitClass = b.profit < 0 ? "warn" : "nontax";
   const marginText = b.marginPct === null ? "-" : `${b.marginPct.toFixed(1)}%`;
   grid.innerHTML = `
-    <div class="kpi"><div class="label">仕入 合計</div><div class="value">${fmtYen(b.buyTotal)}</div><div class="sub">${b.buyCount.toLocaleString("ja-JP")}件</div></div>
-    <div class="kpi accent"><div class="label">売上 合計</div><div class="value">${fmtYen(b.sellTotal)}</div><div class="sub">${b.sellCount.toLocaleString("ja-JP")}件</div></div>
-    <div class="kpi ${profitClass}"><div class="label">粗利(売上-仕入)</div><div class="value">${fmtYen(b.profit)}</div></div>
+    <div class="kpi"><div class="label">在庫 台数</div><div class="value">${b.stockCount.toLocaleString("ja-JP")}<span class="unit">台</span></div><div class="sub">評価額 ${fmtYen(b.stockValue)}</div></div>
+    <div class="kpi"><div class="label">販売済み 台数</div><div class="value">${b.soldCount.toLocaleString("ja-JP")}<span class="unit">台</span></div></div>
+    <div class="kpi"><div class="label">仕入 合計</div><div class="value">${fmtYen(b.buyTotal)}</div></div>
+    <div class="kpi accent"><div class="label">売上 合計</div><div class="value">${fmtYen(b.sellTotal)}</div></div>
+    <div class="kpi ${profitClass}"><div class="label">粗利 合計</div><div class="value">${fmtYen(b.profit)}</div></div>
     <div class="kpi ${profitClass}"><div class="label">利益率</div><div class="value">${marginText}</div></div>
   `;
 }
 
-function renderBreakdown(r) {
-  const parts = [];
-  if (r.recycle_fee) parts.push(`<span class="item">リサイクル ${fmtYen(r.recycle_fee)}</span>`);
-  if (r.auto_tax_proration) parts.push(`<span class="item">自動車税 ${fmtYen(r.auto_tax_proration)}</span>`);
-  if (r.jibaiseki_fee) parts.push(`<span class="item">自賠責 ${fmtYen(r.jibaiseki_fee)}</span>`);
-  if (r.other_nontaxable_amount) parts.push(`<span class="item">${r.other_nontaxable_note || "その他"} ${fmtYen(r.other_nontaxable_amount)}</span>`);
-  return parts.length ? parts.join("<br>") : "-";
+function renderDealCell(r) {
+  if (!r) return '<span class="dim">-</span>';
+  const nontaxParts = [];
+  if (r.recycle_fee) nontaxParts.push(`リサイクル ${fmtYen(r.recycle_fee)}`);
+  if (r.auto_tax_proration) nontaxParts.push(`自動車税 ${fmtYen(r.auto_tax_proration)}`);
+  if (r.jibaiseki_fee) nontaxParts.push(`自賠責 ${fmtYen(r.jibaiseki_fee)}`);
+  if (r.other_nontaxable_amount) nontaxParts.push(`${r.other_nontaxable_note || "その他"} ${fmtYen(r.other_nontaxable_amount)}`);
+  const nontaxLine = nontaxParts.length ? `非課税: ${nontaxParts.join(" / ")}` : "非課税項目なし";
+  return `
+    <div class="deal-cell">
+      <div class="dc-date">${r.deal_date || "-"}${r.counterparty ? " ・ " + r.counterparty : ""}</div>
+      <div class="dc-total">総額 ${fmtYen(r.total_amount || 0)}</div>
+      <div class="dc-nontax">${nontaxLine}</div>
+      <div class="dc-taxable">課税対象額 <strong>${fmtYen(r.taxable_amount || 0)}</strong></div>
+      ${r.source_file ? `<div class="dc-source">資料: ${r.source_file}</div>` : ""}
+    </div>
+  `;
 }
 
-let sortKey = "deal_date";
+let sortKey = "buy_date";
 let sortDir = -1;
-let typeFilterValue = "all";
+let statusFilterValue = "all";
 let searchValue = "";
 
-function getFiltered() {
-  return DATA.records.filter((r) => {
-    if (typeFilterValue !== "all" && r.type !== typeFilterValue) return false;
+function vehicleSortValue(v, key) {
+  switch (key) {
+    case "chassis_no": return v.chassis_no || "";
+    case "vehicle": return v.vehicle || "";
+    case "status": return v.status || "";
+    case "buy_date": return (v.buy && v.buy.deal_date) || "";
+    case "sell_date": return (v.sell && v.sell.deal_date) || "";
+    case "profit": return v.profit;
+    default: return "";
+  }
+}
+
+function getFilteredVehicles() {
+  const all = buildVehicles(DATA.records);
+  return all.filter((v) => {
+    if (statusFilterValue !== "all" && v.status !== statusFilterValue) return false;
     if (searchValue) {
-      const hay = `${r.counterparty || ""} ${r.vehicle || ""}`.toLowerCase();
+      const hay = `${v.chassis_no || ""} ${v.vehicle || ""} ${(v.buy && v.buy.counterparty) || ""} ${(v.sell && v.sell.counterparty) || ""}`.toLowerCase();
       if (!hay.includes(searchValue.toLowerCase())) return false;
     }
     return true;
@@ -310,20 +364,23 @@ function getFiltered() {
 }
 
 function render() {
-  const filtered = getFiltered();
-  renderKPIs(filtered);
+  const allVehicles = buildVehicles(DATA.records);
+  renderBizKPIs(allVehicles);
 
+  const filtered = getFilteredVehicles();
   const sorted = [...filtered].sort((a, b) => {
-    const av = a[sortKey], bv = b[sortKey];
+    const av = vehicleSortValue(a, sortKey), bv = vehicleSortValue(b, sortKey);
     if (typeof av === "number" || typeof bv === "number") {
-      return ((Number(av) || 0) - (Number(bv) || 0)) * sortDir;
+      const an = av === null ? -Infinity : Number(av) || 0;
+      const bn = bv === null ? -Infinity : Number(bv) || 0;
+      return (an - bn) * sortDir;
     }
     return String(av || "").localeCompare(String(bv || ""), "ja") * sortDir;
   });
 
-  const body = document.getElementById("recordsBody");
+  const body = document.getElementById("vehiclesBody");
   const empty = document.getElementById("emptyState");
-  const table = document.getElementById("recordsTable");
+  const table = document.getElementById("vehiclesTable");
 
   if (sorted.length === 0) {
     body.innerHTML = "";
@@ -332,17 +389,14 @@ function render() {
   } else {
     table.style.display = "";
     empty.hidden = true;
-    body.innerHTML = sorted.map((r) => `
+    body.innerHTML = sorted.map((v) => `
       <tr>
-        <td>${r.deal_date || "-"}</td>
-        <td><span class="badge ${r.type === "sell" ? "sell" : "buy"}">${r.type === "sell" ? "販売" : "仕入"}</span></td>
-        <td>${r.counterparty || "-"}</td>
-        <td>${r.vehicle || "-"}</td>
-        <td class="num">${fmtYen(r.total_amount || 0)}</td>
-        <td class="breakdown">${renderBreakdown(r)}</td>
-        <td class="num">${fmtYen(r.taxable_amount || 0)}</td>
-        <td class="num">${fmtYen(r.consumption_tax_estimate || 0)}</td>
-        <td>${r.source_file || "-"}</td>
+        <td>${v.chassis_no}</td>
+        <td>${v.vehicle}</td>
+        <td><span class="badge ${STATUS_BADGE_CLASS[v.status]}">${STATUS_LABEL[v.status]}</span></td>
+        <td>${renderDealCell(v.buy)}</td>
+        <td>${renderDealCell(v.sell)}</td>
+        <td class="num">${v.profit === null ? '<span class="dim">-</span>' : fmtYen(v.profit)}</td>
       </tr>
     `).join("");
   }
@@ -357,16 +411,16 @@ function render() {
 document.querySelectorAll("thead th[data-key]").forEach((th) => {
   th.addEventListener("click", () => {
     const key = th.dataset.key;
-    if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+    if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = key === "profit" ? -1 : -1; }
     render();
   });
 });
 
-document.getElementById("typeFilter").addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-type]");
+document.getElementById("statusFilter").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-status]");
   if (!btn) return;
-  typeFilterValue = btn.dataset.type;
-  document.querySelectorAll("#typeFilter button").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+  statusFilterValue = btn.dataset.status;
+  document.querySelectorAll("#statusFilter button").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
   render();
 });
 
@@ -375,6 +429,5 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
   render();
 });
 
-renderBizKPIs(DATA.records);
 render();
 </script>
