@@ -16,6 +16,8 @@
   --nontax-tint: #E7EFEA;
   --tax: #4A3F73;
   --tax-tint: #EBE7F5;
+  --warn: #B3492E;
+  --warn-tint: #F6E4DE;
   --font: "Hiragino Sans", "Yu Gothic Medium", "YuGothic", "Noto Sans JP", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
@@ -32,17 +34,21 @@
     --nontax-tint: #1C2B25;
     --tax: #A79BD9;
     --tax-tint: #262038;
+    --warn: #E38267;
+    --warn-tint: #3A2620;
   }
 }
 :root[data-theme="dark"] {
   --paper: #15130F; --surface: #1E1B16; --ink: #F1ECE2; --ink-soft: #B2A897;
   --line: #38322A; --accent: #E38B44; --accent-deep: #F0A868; --accent-tint: #3A2A18;
   --nontax: #6FB59B; --nontax-tint: #1C2B25; --tax: #A79BD9; --tax-tint: #262038;
+  --warn: #E38267; --warn-tint: #3A2620;
 }
 :root[data-theme="light"] {
   --paper: #F5F3EE; --surface: #FFFFFF; --ink: #211C17; --ink-soft: #6E655A;
   --line: #E4DFD3; --accent: #C9611E; --accent-deep: #9C4A15; --accent-tint: #FBE9D8;
   --nontax: #1F4B3F; --nontax-tint: #E7EFEA; --tax: #4A3F73; --tax-tint: #EBE7F5;
+  --warn: #B3492E; --warn-tint: #F6E4DE;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--paper); }
@@ -82,10 +88,20 @@ header.top .meta { color: var(--ink-soft); font-size: 0.88rem; }
 }
 .kpi .label { font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.4rem; }
 .kpi .value { font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.kpi .sub { font-size: 0.78rem; color: var(--ink-soft); margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
 .kpi .unit { font-size: 0.85rem; font-weight: 500; color: var(--ink-soft); margin-left: 0.15rem; }
 .kpi.accent .value { color: var(--accent-deep); }
 .kpi.nontax .value { color: var(--nontax); }
 .kpi.tax .value { color: var(--tax); }
+.kpi.warn .value { color: var(--warn); }
+
+.section-heading {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin: 0 0 0.8rem;
+}
+.section-heading h2 { font-size: 1rem; font-weight: 800; margin: 0; }
+.section-heading .note { font-size: 0.78rem; color: var(--ink-soft); }
+.section-divider { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 
 .controls {
   display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center;
@@ -163,6 +179,18 @@ footer.foot a { color: var(--accent-deep); }
     <div class="meta">スマイルカーズ松山店 / 契約書・精算書から抽出した取引データ・最終更新: <span id="generatedAt"></span></div>
   </header>
 
+  <div class="section-heading">
+    <h2>経営サマリー</h2>
+    <span class="note">全期間・課税対象額(車両本体分)ベース</span>
+  </div>
+  <div class="kpi-grid" id="bizKpiGrid"></div>
+
+  <hr class="section-divider">
+
+  <div class="section-heading">
+    <h2>非課税項目の内訳</h2>
+    <span class="note">下の検索・絞り込みに連動します</span>
+  </div>
   <div class="kpi-grid" id="kpiGrid"></div>
 
   <div class="controls">
@@ -204,7 +232,7 @@ footer.foot a { color: var(--accent-deep); }
 
 <script>
 const DATA = {"spreadsheet_id": "1hILLvJaDzHJRidrZtXkReGEHdMgqN9lz_6dqezInuvU", "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1hILLvJaDzHJRidrZtXkReGEHdMgqN9lz_6dqezInuvU/edit", "upload_folder_id": "1S086S6wpMfTOoyrdfazDWMprK5rqQYrR", "upload_folder_url": "https://drive.google.com/drive/folders/1S086S6wpMfTOoyrdfazDWMprK5rqQYrR", "processed_file_ids": [], "columns": ["no", "recorded_at", "deal_date", "type", "counterparty", "vehicle", "chassis_no", "total_amount", "recycle_fee", "auto_tax_proration", "jibaiseki_fee", "other_nontaxable_amount", "other_nontaxable_note", "taxable_amount", "consumption_tax_estimate", "source_file", "note"], "records": []};
-const GENERATED_AT = "2026-07-31 08:52 JST";
+const GENERATED_AT = "2026-07-31 09:09 JST";
 
 document.getElementById("generatedAt").textContent = GENERATED_AT;
 
@@ -229,6 +257,30 @@ function renderKPIs(records) {
     <div class="kpi nontax"><div class="label">非課税項目 合計</div><div class="value">${fmtYen(k.nontax)}</div></div>
     <div class="kpi accent"><div class="label">課税対象額 合計</div><div class="value">${fmtYen(k.taxable)}</div></div>
     <div class="kpi tax"><div class="label">消費税概算 合計</div><div class="value">${fmtYen(k.taxEst)}</div></div>
+  `;
+}
+
+function computeBizKPIs(records) {
+  const buys = records.filter((r) => r.type === "buy");
+  const sells = records.filter((r) => r.type === "sell");
+  const sum = (list, key) => list.reduce((a, r) => a + (Number(r[key]) || 0), 0);
+  const buyTotal = sum(buys, "taxable_amount");
+  const sellTotal = sum(sells, "taxable_amount");
+  const profit = sellTotal - buyTotal;
+  const marginPct = sellTotal > 0 ? (profit / sellTotal) * 100 : null;
+  return { buyCount: buys.length, sellCount: sells.length, buyTotal, sellTotal, profit, marginPct };
+}
+
+function renderBizKPIs(records) {
+  const b = computeBizKPIs(records);
+  const grid = document.getElementById("bizKpiGrid");
+  const profitClass = b.profit < 0 ? "warn" : "nontax";
+  const marginText = b.marginPct === null ? "-" : `${b.marginPct.toFixed(1)}%`;
+  grid.innerHTML = `
+    <div class="kpi"><div class="label">仕入 合計</div><div class="value">${fmtYen(b.buyTotal)}</div><div class="sub">${b.buyCount.toLocaleString("ja-JP")}件</div></div>
+    <div class="kpi accent"><div class="label">売上 合計</div><div class="value">${fmtYen(b.sellTotal)}</div><div class="sub">${b.sellCount.toLocaleString("ja-JP")}件</div></div>
+    <div class="kpi ${profitClass}"><div class="label">粗利(売上-仕入)</div><div class="value">${fmtYen(b.profit)}</div></div>
+    <div class="kpi ${profitClass}"><div class="label">利益率</div><div class="value">${marginText}</div></div>
   `;
 }
 
@@ -323,5 +375,6 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
   render();
 });
 
+renderBizKPIs(DATA.records);
 render();
 </script>
