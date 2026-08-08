@@ -5,7 +5,8 @@
   "upload_folder_url": "https://drive.google.com/drive/folders/1S086S6wpMfTOoyrdfazDWMprK5rqQYrR",
   "processed_file_ids": [
     "1yLQmX7T68QjSNbYghb0-JCmxcaOtrKg3",
-    "1yHqowpgeo0ftMZRl1jRIhiKN_D0s0omU"
+    "1yHqowpgeo0ftMZRl1jRIhiKN_D0s0omU",
+    "1tlo8cmbXPaKvG3ox4Ed3Q2ZaF5jm3eDp"
   ],
   "columns": [
     "no",
@@ -66,6 +67,26 @@
       "taxable_amount": 3794030,
       "consumption_tax_estimate": 344912,
       "source_file": "IMG_2955.JPG",
+      "note": ""
+    },
+    {
+      "no": 3,
+      "recorded_at": "2026-08-08 17:09",
+      "deal_date": "2026-07-08",
+      "type": "sell",
+      "type_evidence": "書類タイトルが『請求書』で村上智哉様宛にスマイルカーズ(株式会社ASHITA)が車両代金を請求している",
+      "counterparty": "村上智哉",
+      "vehicle": "スズキ ジムニーシエラJC 型式GJCR-5(3BA-JB74W) [AT]",
+      "chassis_no": "JB74W-5926",
+      "total_amount": 2721000,
+      "recycle_fee": 22000,
+      "auto_tax_proration": 0,
+      "jibaiseki_fee": 0,
+      "other_nontaxable_amount": 0,
+      "other_nontaxable_note": "",
+      "taxable_amount": 2699000,
+      "consumption_tax_estimate": 245364,
+      "source_file": "IMG_2956.JPG",
       "note": ""
     }
   ]
